@@ -1,0 +1,23 @@
+{
+    "name": "digitalformula/utilities",
+    "description": "Packagist package that provides simple PHP utilities",
+    "license": "MIT",
+	"keywords": [ "php", "utilities" ],
+    "authors": [
+        {
+            "name": "Chris Rasmussen",
+            "email": "packages@digitalformula.net",
+            "homepage": "http://digitalformula.net",
+            "role": "Developer"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+        "psr-0": {
+            "DigitalFormula\\Utilities": "src/"
+        }
+    }
+}
