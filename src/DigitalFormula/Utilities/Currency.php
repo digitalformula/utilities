@@ -39,7 +39,9 @@ class Currency
     {
         try
         {
-            $open = fopen( "http://quote.yahoo.com/d/quotes.csv?s=$baseCurrency[0]$quoteCurrency[0]=X&f=sl1d1t1c1ohgv&e=.csv", "r" );
+            $base_in = array( "{$baseCurrency}" );
+            $quote_in = array( "{$quoteCurrency}" );
+            $open = fopen( "http://quote.yahoo.com/d/quotes.csv?s=$base_in[0]$quote_in[0]=X&f=sl1d1t1c1ohgv&e=.csv", "r" );
             $exchangeRate = fread( $open, 2000 );
             fclose( $open );
             $exchangeRate = explode(
@@ -50,7 +52,7 @@ class Currency
             $amount = number_format( $amount );
             return( $results );
         }
-        catch( Exception $e )
+        catch( \Exception $e )
         {
         	$message = $e->getMessage();
             throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
