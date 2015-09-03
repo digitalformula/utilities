@@ -72,7 +72,7 @@ class Currency
     {
         try
         {
-            $ch = curl_init( "http://api.fixer.io/latest?base={$baseCurrency}&symbols={$quoteCurrency}" );
+            $ch = curl_init( "https://api.fixer.io/latest?base={$baseCurrency}&symbols={$quoteCurrency}" );
             curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
             $json = curl_exec( $ch );
             curl_close( $ch );
