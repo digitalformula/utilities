@@ -77,7 +77,16 @@ class Currency
             $json = curl_exec( $ch );
             curl_close( $ch );
             $exchangeRateInfo = json_decode( $json );
-            return( $amount * $exchangeRateInfo->rates->$quoteCurrency );
+
+            if( isset( $exchangeRateInfo->rates ) )
+            {
+                return ( $amount * $exchangeRateInfo->rates->$quoteCurrency );
+            }
+            else
+            {
+                $message = 'Unsupported currency detected during Fixer.io currency conversion.';
+                throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
+            }
         }
         catch( Exception $e )
         {
