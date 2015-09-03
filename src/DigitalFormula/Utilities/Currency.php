@@ -59,6 +59,33 @@ class Currency
         }
     }
     /* YahooCurrencyConversion */
+
+    /**
+     * Perform a real-time currency conversion using the Fixer.io API
+     *
+     * @param $baseCurrency
+     * @param $quoteCurrency
+     * @return mixed
+     * @throws CurrencyConversionException
+     */
+    public static function FixerIoConversion( $amount, $baseCurrency, $quoteCurrency )
+    {
+        try
+        {
+            $ch = curl_init( "http://api.fixer.io/latest?base={$baseCurrency}&symbols={$quoteCurrency}" );
+            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+            $json = curl_exec( $ch );
+            curl_close( $ch );
+            $exchangeRateInfo = json_decode( $json );
+            return( $amount * $exchangeRateInfo->rates->$quoteCurrency );
+        }
+        catch( Exception $e )
+        {
+            $message = $e->getMessage();
+            throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
+        }
+    }
+    /* FixerIoConversion */
     
 }
 /* Currency */
