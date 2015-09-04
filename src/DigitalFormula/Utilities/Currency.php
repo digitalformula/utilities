@@ -27,7 +27,7 @@ namespace DigitalFormula\Utilities;
 class Currency
 {
 
-	/**
+    /**
      * Perform a currency conversion
      * @param integer $amount The amount to convert
      * @param string $baseCurrency The currency to convert from
@@ -54,7 +54,7 @@ class Currency
         }
         catch( \Exception $e )
         {
-        	$message = $e->getMessage();
+            $message = $e->getMessage();
             throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
         }
     }
@@ -63,38 +63,48 @@ class Currency
     /**
      * Perform a real-time currency conversion using the Fixer.io API
      *
+     * @param $amount
      * @param $baseCurrency
      * @param $quoteCurrency
      * @return mixed
      * @throws CurrencyConversionException
+     * @throws InvalidBaseCurrencyException
      */
     public static function FixerIoConversion( $amount, $baseCurrency, $quoteCurrency )
     {
-        try
+        if( $baseCurrency == $quoteCurrency )
         {
-            $ch = curl_init( "https://api.fixer.io/latest?base={$baseCurrency}&symbols={$quoteCurrency}" );
-            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-            $json = curl_exec( $ch );
-            curl_close( $ch );
-            $exchangeRateInfo = json_decode( $json );
+            return $amount;
+        }
+        else {
+            try {
+                $ch = curl_init( "http://api.fixer.io/latest?base={$baseCurrency}&symbols={$quoteCurrency}" );
+                curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+                $json = curl_exec( $ch );
+                curl_close( $ch );
+                $exchangeRateInfo = json_decode( $json );
 
-            if( isset( $exchangeRateInfo->rates ) )
-            {
-                return ( $amount * $exchangeRateInfo->rates->$quoteCurrency );
+                if ( isset( $exchangeRateInfo->rates ) ) {
+                    return ( $amount * $exchangeRateInfo->rates->$quoteCurrency );
+                }
+                else {
+                    if ( $exchangeRateInfo->error == 'Invalid base' ) {
+                        $message = 'Unsupported currency used during Fixer.io currency conversion.';
+                        throw new \DigitalFormula\Utilities\InvalidBaseCurrencyException( $message, 1 );
+                    }
+                    else {
+                        $message = 'Unhandled exception during Fixer.io currency conversion.';
+                        throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
+                    }
+                }
             }
-            else
-            {
-                $message = 'Unsupported currency detected during Fixer.io currency conversion.';
+            catch ( Exception $e ) {
+                $message = $e->getMessage();
                 throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
             }
         }
-        catch( Exception $e )
-        {
-            $message = $e->getMessage();
-            throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
-        }
     }
     /* FixerIoConversion */
-    
+
 }
 /* Currency */
