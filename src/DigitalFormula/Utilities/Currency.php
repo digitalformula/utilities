@@ -2,109 +2,76 @@
 /**
  *
  * Contains the Currency class
+ * Intended for use with Laravel >=5.1
  *
  * @author Chris Rasmussen, digitalformula.net
  * @category Libraries & Utilities
  * @license Apache License, Version 2.0
  * @package DigitalFormula\Utilities
- * @extends \Exception
  *
  */
 
 namespace DigitalFormula\Utilities;
 
+use Log;
+use Sentinel;
+
 /**
  *
  * The Currency class
+ * Intended for use with Laravel >=5.1
  *
  * @author Chris Rasmussen, digitalformula.net
  * @category Libraries & Utilities
  * @license Apache License, Version 2.0
  * @package DigitalFormula\Utilities
- * @extends \Exception
  *
  */
 class Currency
 {
 
     /**
-     * Perform a currency conversion
-     * @param integer $amount The amount to convert
-     * @param string $baseCurrency The currency to convert from
-     * @param string $quoteCurrency The currency to convert to
-     * @returns integer The converted value
-     * @throws \DigitalFormula\Utilities\CurrencyConversionException
-     */
-    public static function YahooCurrencyConversion( $amount, $baseCurrency, $quoteCurrency )
-    {
-        try
-        {
-            $base_in = array( "{$baseCurrency}" );
-            $quote_in = array( "{$quoteCurrency}" );
-            $open = fopen( "http://quote.yahoo.com/d/quotes.csv?s=$base_in[0]$quote_in[0]=X&f=sl1d1t1c1ohgv&e=.csv", "r" );
-            $exchangeRate = fread( $open, 2000 );
-            fclose( $open );
-            $exchangeRate = explode(
-                ',',
-                str_replace( "\"", "", $exchangeRate )
-            );
-            $results = ( $exchangeRate[ 1 ] * $amount );
-            $amount = number_format( $amount );
-            return( $results );
-        }
-        catch( \Exception $e )
-        {
-            $message = $e->getMessage();
-            throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
-        }
-    }
-    /* YahooCurrencyConversion */
-
-    /**
-     * Perform a real-time currency conversion using the Fixer.io API
+     * Perform a real-time currency conversion using CurrencyLayer API
      *
      * @param $amount
-     * @param $baseCurrency
-     * @param $quoteCurrency
-     * @return mixed
-     * @throws CurrencyConversionException
-     * @throws InvalidBaseCurrencyException
+     * @param $from
+     * @param $to
+     * @return int|string
      */
-    public static function FixerIoConversion( $amount, $baseCurrency, $quoteCurrency )
+    public static function CurrencyLayerConversion( $amount, $from, $to )
     {
-        if( $baseCurrency == $quoteCurrency )
+        if( $from == $to )
         {
             return $amount;
         }
         else {
             try {
-                $ch = curl_init( "http://api.fixer.io/latest?base={$baseCurrency}&symbols={$quoteCurrency}" );
-                curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-                $json = curl_exec( $ch );
-                curl_close( $ch );
-                $exchangeRateInfo = json_decode( $json );
-
-                if ( isset( $exchangeRateInfo->rates ) ) {
-                    return ( $amount * $exchangeRateInfo->rates->$quoteCurrency );
-                }
-                else {
-                    if ( $exchangeRateInfo->error == 'Invalid base' ) {
-                        $message = 'Unsupported currency used during Fixer.io currency conversion.';
-                        throw new \DigitalFormula\Utilities\InvalidBaseCurrencyException( $message, 1 );
-                    }
-                    else {
-                        $message = 'Unhandled exception during Fixer.io currency conversion.';
-                        throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
-                    }
+                $endpoint = 'convert';
+                $access_key = env( 'CURRENCY_LAYER_ACCESS_KEY' );
+                $ch = curl_init( 'https://apilayer.net/api/' . $endpoint . '?access_key=' . $access_key . '&from=' . $from . '&to=' . $to . '&amount=' . $amount . '' );
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $json = curl_exec($ch);
+                curl_close($ch);
+                $conversionResult = json_decode($json, true);
+                switch( $conversionResult[ 'success' ] )
+                {
+                    case true:
+                        return number_format( $conversionResult['result'], 2 );
+                        break;
+                    case false;
+                        Log::error( $conversionResult[ 'error' ][ 'info' ], [ 'email' => Sentinel::getUser()->email, 'from' => $from, 'to' => $to ] );
+                        return 0;
+                        break;
                 }
             }
             catch ( Exception $e ) {
                 $message = $e->getMessage();
-                throw new \DigitalFormula\Utilities\CurrencyConversionException( $message, 1 );
+                Log::error( $message, [ 'email' => Sentinel::getUser()->email, 'from' => $from, 'to' => $to ] );
+                return 0;
             }
         }
     }
-    /* FixerIoConversion */
+    /* CurrencyLayerConversion */
 
 }
 /* Currency */
